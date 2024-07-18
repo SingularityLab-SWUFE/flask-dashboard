@@ -60,8 +60,19 @@ def register():
 
 @account.route('/login', methods=['POST'])
 def login():
-    pass
-
+    data = request.form
+    username = data.get('username')
+    password = data.get('password')
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return Result.error(msg="username not found")
+    
+    if not check_password_hash(user.password_hash, password):
+        return Result.error(msg="incorrect password")
+    
+    return Result.success(data={"user": user.to_json(), "access_token": user.access_token})
+    
 
 @account.route('/test', methods=['GET'])
 def test():
