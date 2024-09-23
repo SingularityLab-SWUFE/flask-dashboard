@@ -25,7 +25,7 @@ class Result:
             "msg": msg,
             "data": data
         }
-        return jsonify(resp)
+        return jsonify(resp), 200
 
     @staticmethod
     def error(msg="error"):
@@ -33,4 +33,4 @@ class Result:
             "code": 400,
             "msg": msg,
         }
-        return jsonify(resp)
+        return jsonify(resp), 400
