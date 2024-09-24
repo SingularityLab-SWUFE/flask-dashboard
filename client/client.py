@@ -38,10 +38,12 @@ class UnittestHandler():
         print(f'Running tests in {base_dir}')
         print(self.splitor)
         loader = unittest.TestLoader()
+        suite = unittest.TestSuite()
         # if provided test files
         if testcases:
-            suite = loader.discover(base_dir, pattern='|'.join(testcases))
-        # find all `test_*.py` files
+            for testcase in testcases:
+                suite.addTests(loader.discover(base_dir, testcase))
+        # find all `test_*.py` files in `base_dir`
         else:
             suite = loader.discover(base_dir)
 
@@ -150,9 +152,10 @@ class ScoreClient():
         for config in self.lab_config:
             if int(assignment_id) == int(config['assignment_id']):
                 lab_config = config
+        base_dir = lab_config['base_dir']
         testcases = lab_config["test_cases"]
         handler = UnittestHandler(base_dirs=['.'])
-        handler.test_single('.', testcases)
+        handler.test_single(base_dir, testcases)
         # handler.test_all()
 
         local_score = int(handler.passed_tests /
@@ -218,6 +221,7 @@ class ScoreClient():
             print('No lab configuration file found. Please check whether you are in the correct directory or missing current lab configuration file.')
             return False
         testcase_dirs = lab_config['test_cases']
+        lab_config.pop('base_dir')
         local_md5 = to_md5(lab_config)
         if not self._validate_config(assignment_id, local_md5, 'json'):
             return False

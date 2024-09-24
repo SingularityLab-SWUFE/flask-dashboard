@@ -2,7 +2,9 @@
     "assignment_id": 1,
     "name": "lab0",
     "max_score": 100,
+    "base_dir": "tests",
     "test_cases": [
-        "test_aplusb.py"
+        "test_aplusb.py",
+        "test_amulb.py"
     ]
 }
