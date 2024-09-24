@@ -5,7 +5,7 @@ from sqlalchemy import func
 
 from . import submission
 from ..models import db, User, Submission, Assignment, Testcase
-from ..utils import Result, Validator
+from ..utils import Result, Validator, token_required
 
 
 class AssignmentValidator(Validator):
@@ -46,92 +46,79 @@ class SubmissionValidator(Validator):
 
 
 @submission.route('/submission', methods=['GET', 'POST'])
-def submit():
-    if request.method == 'POST':
-        # Bearer + token
-        token = request.headers.get('Authorization').split(' ')[1]
-        if not token:
-            return Result.error('Authorization required')
-        user = User.query.filter_by(access_token=token).first()
-        if not user:
-            return Result.error('Invalid token or user not found')
+@token_required
+def submit(user):
+    data = request.form
+    assignment_id = data.get('assignment_id')
+    score = data.get('score')
 
-        data = request.form
-        assignment_id = data.get('assignment_id')
-        score = data.get('score')
+    # TODO: validate md5 of test file
+    validator = SubmissionValidator(assignment_id, score)
+    is_valid, error_msg = validator.validate()
+    if not is_valid:
+        return Result.error(error_msg)
 
-        # TODO: validate md5 of test file
-        validator = SubmissionValidator(assignment_id, score)
-        is_valid, error_msg = validator.validate()
-        if not is_valid:
-            return Result.error(error_msg)
+    submission = Submission(user_id=user.id, assignment_id=assignment_id,
+                            content=data.get('content'), score=int(score))
+    db.session.add(submission)
+    db.session.commit()
+    return Result.success(f'Submission {submission.id} created successfully at {submission.submitted_at}')
 
-        submission = Submission(user_id=user.id, assignment_id=assignment_id,
-                                content=data.get('content'), score=int(score))
-        db.session.add(submission)
-        db.session.commit()
-        return Result.success(f'Submission {submission.id} created successfully at {submission.submitted_at}')
 
-    elif request.method == 'GET':
-        # get query parameters
-        data = request.args
-        user_id = data.get('user_id')
-        assignment_id = data.get('assignment_id')
-        if not user_id or not assignment_id:
-            return Result.error('User id and assignment id are required')
-        user = User.query.filter_by(id=user_id).first()
-        if not user:
-            return Result.error(f'User {user_id} not found')
-        assignment = Assignment.query.filter_by(id=assignment_id).first()
-        if not assignment:
-            return Result.error(f'Assignment {assignment_id} not found')
-        submissions = Submission.query.filter_by(
-            user_id=user_id, assignment_id=assignment_id).all()
-        return Result.success(data=[s.to_json() for s in submissions])
-
+@submission.route('/submission', methods=['GET'])
+def user_submissions():
+    data = request.args
+    user_id = data.get('user_id')
+    assignment_id = data.get('assignment_id')
+    if not user_id or not assignment_id:
+        return Result.error('User id and assignment id are required')
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return Result.error(f'User {user_id} not found')
+    assignment = Assignment.query.filter_by(id=assignment_id).first()
+    if not assignment:
+        return Result.error(f'Assignment {assignment_id} not found')
+    submissions = Submission.query.filter_by(
+        user_id=user_id, assignment_id=assignment_id).all()
+    return Result.success(data=[s.to_json() for s in submissions])
+    
 
 @submission.route('/assignment', methods=['GET', 'POST'])
-def assign():
-    if request.method == 'POST':
-        token = request.headers.get('Authorization').split(' ')[1]
-        if not token:
-            return Result.error('Authorization required')
-        user = User.query.filter_by(access_token=token).first()
-        if not user:
-            return Result.error('Invalid token or user not found')
-        if user.role != 'admin':
-            return Result.error('Permission denied')
+@token_required
+def assign(user : User):
+    if user.role != 'admin':
+        return Result.error('Permission denied')
 
-        data = request.form
-        name = data.get('name')
-        description = data.get('description')
-        max_score = data.get('max_score')
-        deadline = data.get('deadline')
-        deadline = datetime.strptime(
-            deadline, '%Y-%m-%d %H:%M:%S%z') if deadline else None
+    data = request.form
+    name = data.get('name')
+    description = data.get('description')
+    max_score = data.get('max_score')
+    deadline = data.get('deadline')
+    deadline = datetime.strptime(
+        deadline, '%Y-%m-%d %H:%M:%S%z') if deadline else None
 
-        validator = AssignmentValidator(name, description, max_score, deadline)
-        is_valid, error_msg = validator.validate()
-        if not is_valid:
-            return Result.error(error_msg)
+    validator = AssignmentValidator(name, description, max_score, deadline)
+    is_valid, error_msg = validator.validate()
+    if not is_valid:
+        return Result.error(error_msg)
 
-        assignment = Assignment(name=name, description=description,
-                                max_score=max_score, deadline=deadline, is_published=True)
-        db.session.add(assignment)
-        db.session.commit()
-        return Result.success(f'Assignment {assignment.id} created successfully at {assignment.created_at}')
+    assignment = Assignment(name=name, description=description,
+                            max_score=max_score, deadline=deadline, is_published=True)
+    db.session.add(assignment)
+    db.session.commit()
+    return Result.success(f'Assignment {assignment.id} created successfully at {assignment.created_at}')
 
-    elif request.method == 'GET':
-        # get query parameters
-        data = request.args
-        assignment_id = data.get('assignment_id')
-        if not assignment_id:
-            return Result.error('Assignment id is required')
-        assignment = Assignment.query.filter_by(id=assignment_id).first()
-        if not assignment:
-            return Result.error(f'Assignment {assignment_id} not found')
-        return Result.success(data=assignment.to_json())
 
+@submission.route('/assignment', methods=['GET'])
+def assignment_info():
+    data = request.args
+    assignment_id = data.get('assignment_id')
+    if not assignment_id:
+        return Result.error('Assignment id is required')
+    assignment = Assignment.query.filter_by(id=assignment_id).first()
+    if not assignment:
+        return Result.error(f'Assignment {assignment_id} not found')
+    return Result.success(data=assignment.to_json())
 
 @submission.route('/scoreboard', methods=['GET'])
 def scoreboard():
@@ -174,17 +161,13 @@ def scoreboard():
     }
     return Result.success(data=data)
 
+
 @submission.route('/testcases', methods=['POST'])
-def upload_testcase():
-    token = request.headers.get('Authorization').split(' ')[1]
-    if not token:
-        return Result.error('Authorization required')
-    user = User.query.filter_by(access_token=token).first()
-    if not user:
-        return Result.error('Invalid token or user not found')
+@token_required
+def upload_testcase(user: User):
     if user.role != 'admin':
         return Result.error('Permission denied')
-    
+
     data = request.form
     assignment_id = data.get('assignment_id')
     if not assignment_id:
@@ -196,9 +179,16 @@ def upload_testcase():
     if not testcases:
         return Result.error('No files part')
     for testcase in testcases:
-        obj = Testcase(file_name=testcase.filename, content=testcase.read(), assignment_id=assignment_id)
-        db.session.add(obj)
-    
+        existing_testcase = Testcase.query.filter_by(
+            file_name=testcase.filename, assignment_id=assignment_id).first()
+        if existing_testcase:
+            # overwrite it
+            existing_testcase.content = testcase.read()
+        else:
+            obj = Testcase(file_name=testcase.filename,
+                       content=testcase.read(), assignment_id=assignment_id)
+            db.session.add(obj)
+
     db.session.commit()
     return Result.success(f'{len(testcases)} testcases uploaded successfully.')
 
@@ -215,7 +205,7 @@ def validate_md5(assignment_id):
         return Result.error('File type is required')
     if not client_md5:
         return Result.error('Client MD5 is required')
-    
+
     server_md5 = ''
     if type == 'json':
         server_md5 = assignment.lab_config_md5()
