@@ -9,12 +9,14 @@ import glob
 import json
 import sys
 import hashlib
+import readline
 
 assert sys.version_info >= (3, 12), 'Python version should be 3.12 or higher.'
 
 # for local server
 DEST_URL = 'http://localhost:5000'
 VERSION = '0.1.0'
+history_file = '.history'
 
 
 # utils
@@ -220,9 +222,9 @@ class ScoreClient():
         if not lab_config:
             print('No lab configuration file found. Please check whether you are in the correct directory or missing current lab configuration file.')
             return False
-        testcase_dirs = lab_config['test_cases']
-        lab_config.pop('base_dir')
-        local_md5 = to_md5(lab_config)
+        base_dir = lab_config['base_dir']
+        testcase_dirs = [base_dir + '/' + testcase_dir for testcase_dir in lab_config['test_cases']]
+        local_md5 = to_md5({k: v for k, v in lab_config.items() if k != 'base_dir'})
         if not self._validate_config(assignment_id, local_md5, 'json'):
             return False
         for testcase in testcase_dirs:
@@ -276,9 +278,13 @@ if __name__ == '__main__':
 
     print(f'Welcome to the Scoreboard CLI Client {VERSION}!')
     client.parsing_lab_config()
+    
+    if os.path.exists(history_file):
+        readline.read_history_file(history_file)
+        
     while True:
         cmd = input(f'{client.username if client.logined else ""}> ')
-
+        readline.add_history(cmd)
         if cmd == 'register':
             email = input('Enter your email: ')
             username = input('Enter your username: ')
@@ -315,3 +321,4 @@ if __name__ == '__main__':
             break
         else:
             print(f'Invalid command of {cmd}.')
+    readline.write_history_file(history_file)
