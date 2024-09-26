@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>上传文件</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <h2>所有作业</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>描述</th>
+                <th>最大分数</th>
+                <th>创建时间</th>
+                <th>截止时间</th>
+                <th>是否发布</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in assignments %}
+            <tr>
+                <td>{{ assignment.id }}</td>
+                <td>{{ assignment.name }}</td>
+                <td>{{ assignment.description }}</td>
+                <td>{{ assignment.max_score }}</td>
+                <td>{{ assignment.created_at }}</td>
+                <td>{{ assignment.deadline }}</td>
+                <td>{{ '是' if assignment.is_published else '否' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h1>上传文件页面</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label for="assignment_id">选择作业:</label>
+        <select name="assignment_id" id="assignment_id" required>
+            {% for assignment in assignments %}
+            <option value="{{ assignment.id }}">{{ assignment.name }}</option>
+            {% endfor %}
+        </select>
+    
+        <input type="file" multiple name="file" required>
+        <button type="submit">上传</button>
+    </form>
+</body>
+
+</html>
