@@ -19,7 +19,7 @@ class AssignmentValidator(Validator):
         is_valid, error_msg = True, ''
         if len(self.name) == 0:
             is_valid, error_msg = False, 'Assignment name is required'
-        if self.deadline and self.deadline <= datetime.now(timezone.utc):
+        if self.deadline and self.deadline <= datetime.now():
             is_valid, error_msg = False, 'Deadline must be in the future'
         return is_valid, error_msg
 
@@ -95,7 +95,7 @@ def assign(user : User):
     max_score = data.get('max_score')
     deadline = data.get('deadline')
     deadline = datetime.strptime(
-        deadline, '%Y-%m-%d %H:%M:%S%z') if deadline else None
+        deadline, '%Y-%m-%dT%H:%M') if deadline else None
 
     validator = AssignmentValidator(name, description, max_score, deadline)
     is_valid, error_msg = validator.validate()
