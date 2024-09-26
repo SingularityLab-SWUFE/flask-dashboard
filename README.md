@@ -12,6 +12,22 @@
 
 不需要做的像课程实验那样严格, 我们希望的是: **哪怕是抄作业, 也抄一遍, 交一下!** :) 这就是这个项目最大的意义.
 
+## 客户端使用
+
+在每次的实验中, 都需要提供一个 json 的实验配置文件, 同时包含一个 `client` 文件作为 CLI 客户端.
+
+- `--local` 选项可以让 judge 脚本在本地运行, 方便调试, 不上传至远端服务器.
+- `--show-token` 登录后显示 token.
+
+## 简易 Web 界面
+
+利用 flask 模板简单编写的 web 页面:
+
+- `index` 主页
+- `rank/{assignment_id}` 榜单
+- `upload` 上传测试用例, 需要输入管理员 token
+- `assignment` 创建实验
+
 ## 通用 API
 
 ### 注册
@@ -50,6 +66,8 @@ query 参数:
 
 未分页. 单次查询返回全部数据.
 
+### 验证 md5
+
 ## 管理员级 API
 
 ### 创建 Assignment
@@ -65,6 +83,17 @@ query 参数:
 - `max_score`: Integer, 最大分数
 - `deadline`: String, 截止日期. 格式: `YYYY-MM-DD HH:MM:SS+0800`
   - 默认 1 周的 DDL
+
+### 添加测试用例
+
+`POST /api/testcase/`
+
+权限: 需要提供 `access_token`
+
+需要提供的参数:
+
+- `testcases`: files, 测试用例文件(可多个)
+- `assignment_id`: int, 实验 ID
 
 ## 用户级 API
 
@@ -83,13 +112,6 @@ query 参数:
 - `score`: Integer, 本次单元测试得到的分数
 
 该接口主要由客户端调用, 上传本次单元测试的运行结果.
-
-## 客户端使用
-
-在每次的实验中, 都需要提供一个 json 的实验配置文件, 同时包含一个 `client.py` 文件作为客户端.
-
-- `--local` 选项可以让 judge 脚本在本地运行, 方便调试, 不上传至远端服务器.
-- `--show-token` 登录后显示 token.
 
 ## 闲话
 
