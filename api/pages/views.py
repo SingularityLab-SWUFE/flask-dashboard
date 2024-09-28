@@ -39,6 +39,9 @@ def not_authorized():
 
 @pages.route('/upload', methods=['GET', 'POST'])
 def upload():
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('pages.not_authorized'))
     if request.method == 'POST':
         file = request.files['file']
         token = session.get('token')
@@ -58,6 +61,9 @@ def upload():
 
 @pages.route('/assignment', methods=['GET', 'POST'])
 def assignment():
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('pages.not_authorized'))
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
