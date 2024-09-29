@@ -1,9 +1,18 @@
-FROM python:3.12-slim
- 
+FROM python:3.12-alpine
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN apk add --update --no-cache mariadb-connector-c-dev \
+    && apk add --no-cache --virtual .build-deps \
+    mariadb-dev \
+    gcc \
+    musl-dev
+
 WORKDIR /app
 
 COPY requirements.txt .
-# Use tuna mirror
+
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
+RUN apk del .build-deps
 
 COPY . .
