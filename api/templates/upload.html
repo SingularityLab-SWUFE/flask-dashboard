@@ -2,48 +2,29 @@
 <html>
 
 <head>
-    <title>上传文件</title>
+    <title>上传测试用例</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
-    <h2>所有作业</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>名称</th>
-                <th>描述</th>
-                <th>最大分数</th>
-                <th>创建时间</th>
-                <th>截止时间</th>
-                <th>是否发布</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for assignment in assignments %}
-            <tr>
-                <td>{{ assignment.id }}</td>
-                <td>{{ assignment.name }}</td>
-                <td>{{ assignment.description }}</td>
-                <td>{{ assignment.max_score }}</td>
-                <td>{{ assignment.created_at }}</td>
-                <td>{{ assignment.deadline }}</td>
-                <td>{{ '是' if assignment.is_published else '否' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h1>上传文件页面</h1>
+    <div class="welcome">Hello, {{user}} :)</div>
+    <h1>上传测试用例</h1>
     <form method="post" enctype="multipart/form-data">
-        <label for="assignment_id">选择作业:</label>
+        <label for="assignment_id">选择 Lab:</label>
         <select name="assignment_id" id="assignment_id" required>
             {% for assignment in assignments %}
             <option value="{{ assignment.id }}">{{ assignment.name }}</option>
             {% endfor %}
         </select>
     
-        <input type="file" multiple name="file" required>
+        <input type="file" multiple name="files" required>
+        {% with messages = get_flashed_messages(with_categories=true)  %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <button type="submit">上传</button>
     </form>
 </body>
