@@ -8,12 +8,13 @@ load_dotenv('.env')
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY')
     HOSTNAME = os.environ.get('HOSTNAME')
-    PORT = os.environ.get('PORT')
+    SERVER_PORT = os.environ.get('SERVER_PORT')
+    DB_PORT = os.environ.get('DB_PORT')
     USERNAME = os.environ.get('USERNAME')
     PASSWORD = os.environ.get('PASSWORD')
     DB_NAME = os.environ.get('DB_NAME')
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{
-        USERNAME}:{PASSWORD}@{HOSTNAME}:{PORT}/{DB_NAME}'
+        USERNAME}:{PASSWORD}@{HOSTNAME}:{DB_PORT}/{DB_NAME}'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

@@ -8,14 +8,16 @@ from . import pages
 
 @pages.route('/', methods=['GET'])
 def index():
-    running_assignments = Assignment.query.filter(Assignment.deadline > datetime.now()).all()
+    running_assignments = Assignment.query.filter(
+        Assignment.deadline > datetime.now()).all()
     return render_template('index.html', assignments=running_assignments)
 
 
 @pages.route('/rank', methods=['GET'])
 def rank():
     assignment_id = request.args.get('assignment_id')
-    api_resp = req.request('GET', 'http://localhost:5000/api/scoreboard',
+    print(request.host_url)
+    api_resp = req.request('GET', request.host_url + url_for('submission.scoreboard').lstrip('/'),
                            params={'assignment_id': assignment_id})
     data = api_resp.json()
     if data['code'] == 200:
@@ -49,7 +51,7 @@ def upload():
     if request.method == 'POST':
         token = session.get('token')
         assignment_id = request.form.get('assignment_id')
-        api_resp = req.request('POST', 'http://localhost:5000/api/testcases',
+        api_resp = req.request('POST', request.host_url + url_for('submission.upload_testcase').lstrip('/'),
                                files=[('testcases', (file.filename, file.read()))
                                       for file in request.files.getlist('files')],
                                data={'assignment_id': assignment_id},
@@ -69,14 +71,14 @@ def upload():
 def assignment():
     token = session.get('token')
     if not token:
-        return redirect(url_for('pages.not_authorized'))
+        return redirect(url_for('pages.not_authorized', next=request.url))
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
         max_score = request.form.get('max_score')
         deadline = request.form.get('deadline')
         token = session.get('token')
-        api_resp = req.request('POST', 'http://localhost:5000/api/assignment',
+        api_resp = req.request('POST', request.host_url + url_for('submission.assign').lstrip('/'),
                                data={'name': name, 'description': description,
                                      'max_score': max_score, 'deadline': deadline},
                                headers={'Authorization': f'Bearer {token}'})

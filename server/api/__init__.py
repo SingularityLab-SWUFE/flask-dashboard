@@ -2,7 +2,7 @@ from .account import account
 from .submission import submission
 from .pages import pages
 from flask import Flask
-from config import config
+from config import Config, config
 
 def create_app(config_name=config['default']):
     app = Flask(__name__)
