@@ -81,11 +81,11 @@ def user_submissions():
     submissions = Submission.query.filter_by(
         user_id=user_id, assignment_id=assignment_id).all()
     return Result.success(data=[s.to_json() for s in submissions])
-    
+
 
 @submission.route('/assignment', methods=['GET', 'POST'])
 @token_required
-def assign(user : User):
+def assign(user: User):
     if user.role != 'admin':
         return Result.error('Permission denied')
 
@@ -119,6 +119,7 @@ def assignment_info():
     if not assignment:
         return Result.error(f'Assignment {assignment_id} not found')
     return Result.success(data=assignment.to_json())
+
 
 @submission.route('/scoreboard', methods=['GET'])
 def scoreboard():
@@ -154,10 +155,10 @@ def scoreboard():
         "name": assignment.name,
         "description": assignment.description,
         "max_score": assignment.max_score,
-        "deadline": assignment.deadline
+        "deadline": assignment.deadline.strftime('%Y-%m-%d %H:%M:%S')
     },
         "scoreboard": [{'username': s[0], 'score': s[1],
-                        'submission_time': s[2]} for s in scoreboard]
+                        'submission_time': s[2].strftime('%Y-%m-%d %H:%M:%S')} for s in scoreboard]
     }
     return Result.success(data=data)
 
@@ -186,7 +187,7 @@ def upload_testcase(user: User):
             existing_testcase.content = testcase.read()
         else:
             obj = Testcase(file_name=testcase.filename,
-                       content=testcase.read(), assignment_id=assignment_id)
+                           content=testcase.read(), assignment_id=assignment_id)
             db.session.add(obj)
 
     db.session.commit()
