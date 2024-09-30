@@ -5,6 +5,7 @@ services:
     container_name: server
     restart: always
     build: ./server
+    network_mode: host
     ports:
       - "8000:8000"
     command: gunicorn -w 4 -b 0.0.0.0:8000 app:app
